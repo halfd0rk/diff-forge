@@ -7,9 +7,10 @@ from pydantic import BaseModel
 
 
 class CaptionProvider(str, Enum):
-    azure  = "azure"
-    openai = "openai"
-    gemini = "gemini"
+    azure    = "azure"
+    openai   = "openai"
+    gemini   = "gemini"
+    lmstudio = "lmstudio"
 
 
 class AzureConfig(BaseModel):
@@ -33,13 +34,20 @@ class GeminiConfig(BaseModel):
     ] = "gemini-2.5-flash"
 
 
+class LMStudioConfig(BaseModel):
+    base_url: str = "http://localhost:1234/v1"
+    api_key:  str = ""
+    model:    str = ""
+
+
 class CaptionRequestConfig(BaseModel):
     """JSON-encoded config sent alongside the media file upload."""
-    provider:      CaptionProvider
-    system_prompt: str = ""
-    azure_config:  Optional[AzureConfig]  = None
-    openai_config: Optional[OpenAIConfig] = None
-    gemini_config: Optional[GeminiConfig] = None
+    provider:        CaptionProvider
+    system_prompt:   str = ""
+    azure_config:    Optional[AzureConfig]    = None
+    openai_config:   Optional[OpenAIConfig]   = None
+    gemini_config:   Optional[GeminiConfig]   = None
+    lmstudio_config: Optional[LMStudioConfig] = None
 
 
 class CaptionResponse(BaseModel):

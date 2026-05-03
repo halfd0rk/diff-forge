@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type {
   CaptionProvider, ProviderConfig,
-  AzureProviderConfig, OpenAIProviderConfig, GeminiProviderConfig,
+  AzureProviderConfig, OpenAIProviderConfig, GeminiProviderConfig, LMStudioProviderConfig,
   OpenAIModel, GeminiModel,
 } from '@/lib/caption-client';
 import { OPENAI_MODELS, GEMINI_MODELS } from '@/lib/caption-client';
@@ -170,11 +170,47 @@ function GeminiForm({ cfg, onChange }: { cfg: GeminiProviderConfig; onChange: (c
   );
 }
 
+function LMStudioForm({ cfg, onChange }: { cfg: LMStudioProviderConfig; onChange: (c: LMStudioProviderConfig) => void }) {
+  return (
+    <div className="flex flex-col gap-2.5 mt-2">
+      <Field label="Server URL">
+        <Input
+          className={inputCls}
+          placeholder="http://localhost:1234/v1"
+          value={cfg.baseUrl}
+          onChange={e => onChange({ ...cfg, baseUrl: e.target.value })}
+          autoComplete="off"
+        />
+      </Field>
+      <Field label="Model name">
+        <Input
+          className={inputCls}
+          placeholder="e.g. qwen2.5-vl-7b-instruct"
+          value={cfg.model}
+          onChange={e => onChange({ ...cfg, model: e.target.value })}
+          autoComplete="off"
+        />
+      </Field>
+      <Field label="API key (optional)">
+        <Input
+          className={cn(inputCls, 'font-mono tracking-widest')}
+          type="password"
+          placeholder="Leave blank if auth is disabled"
+          value={cfg.apiKey}
+          onChange={e => onChange({ ...cfg, apiKey: e.target.value })}
+          autoComplete="new-password"
+        />
+      </Field>
+    </div>
+  );
+}
+
 // ─── Default configs ──────────────────────────────────────────────────────────
 
-const DEFAULT_AZURE:  AzureProviderConfig  = { endpoint: '', deployment: '', subscriptionKey: '', apiVersion: '2024-12-01-preview' };
-const DEFAULT_OPENAI: OpenAIProviderConfig = { apiKey: '', model: 'gpt-4o' };
-const DEFAULT_GEMINI: GeminiProviderConfig = { apiKey: '', model: 'gemini-2.5-flash' };
+const DEFAULT_AZURE:    AzureProviderConfig    = { endpoint: '', deployment: '', subscriptionKey: '', apiVersion: '2024-12-01-preview' };
+const DEFAULT_OPENAI:   OpenAIProviderConfig   = { apiKey: '', model: 'gpt-4o' };
+const DEFAULT_GEMINI:   GeminiProviderConfig   = { apiKey: '', model: 'gemini-2.5-flash' };
+const DEFAULT_LMSTUDIO: LMStudioProviderConfig = { baseUrl: 'http://localhost:1234/v1', apiKey: '', model: '' };
 
 // ─── Panel ────────────────────────────────────────────────────────────────────
 
@@ -195,9 +231,10 @@ export function CaptionPanel({
 
   const handleProviderSwitch = (p: CaptionProvider) => {
     setLocalProvider(p);
-    if (p === 'azure')  onProviderConfigChange({ provider: 'azure',  azure:  DEFAULT_AZURE  });
-    if (p === 'openai') onProviderConfigChange({ provider: 'openai', openai: DEFAULT_OPENAI });
-    if (p === 'gemini') onProviderConfigChange({ provider: 'gemini', gemini: DEFAULT_GEMINI });
+    if (p === 'azure')    onProviderConfigChange({ provider: 'azure',    azure:    DEFAULT_AZURE    });
+    if (p === 'openai')   onProviderConfigChange({ provider: 'openai',   openai:   DEFAULT_OPENAI   });
+    if (p === 'gemini')   onProviderConfigChange({ provider: 'gemini',   gemini:   DEFAULT_GEMINI   });
+    if (p === 'lmstudio') onProviderConfigChange({ provider: 'lmstudio', lmstudio: DEFAULT_LMSTUDIO });
   };
 
   return (
@@ -248,7 +285,12 @@ export function CaptionPanel({
             <Section label="Provider" icon={<Bot className="w-3 h-3" />}>
               {/* Provider selector */}
               <Seg
-                options={[{ id: 'azure', label: 'Azure' }, { id: 'openai', label: 'OpenAI' }, { id: 'gemini', label: 'Gemini' }]}
+                options={[
+                  { id: 'azure',    label: 'Azure'    },
+                  { id: 'openai',   label: 'OpenAI'   },
+                  { id: 'gemini',   label: 'Gemini'   },
+                  { id: 'lmstudio', label: 'LM Studio' },
+                ]}
                 value={localProvider}
                 onChange={v => handleProviderSwitch(v as CaptionProvider)}
               />
@@ -270,6 +312,12 @@ export function CaptionPanel({
                 <GeminiForm
                   cfg={providerConfig?.gemini ?? DEFAULT_GEMINI}
                   onChange={c => onProviderConfigChange({ provider: 'gemini', gemini: c })}
+                />
+              )}
+              {localProvider === 'lmstudio' && (
+                <LMStudioForm
+                  cfg={providerConfig?.lmstudio ?? DEFAULT_LMSTUDIO}
+                  onChange={c => onProviderConfigChange({ provider: 'lmstudio', lmstudio: c })}
                 />
               )}
 
@@ -361,9 +409,10 @@ export function CaptionPanel({
 
 function isConfigured(pc: ProviderConfig | null): boolean {
   if (!pc) return false;
-  if (pc.provider === 'azure')  return !!(pc.azure?.endpoint && pc.azure?.deployment && pc.azure?.subscriptionKey);
-  if (pc.provider === 'openai') return !!pc.openai?.apiKey;
-  if (pc.provider === 'gemini') return !!pc.gemini?.apiKey;
+  if (pc.provider === 'azure')    return !!(pc.azure?.endpoint && pc.azure?.deployment && pc.azure?.subscriptionKey);
+  if (pc.provider === 'openai')   return !!pc.openai?.apiKey;
+  if (pc.provider === 'gemini')   return !!pc.gemini?.apiKey;
+  if (pc.provider === 'lmstudio') return !!pc.lmstudio?.model;
   return false;
 }
 

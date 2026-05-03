@@ -33,6 +33,13 @@ Example config (Gemini):
   "system_prompt": "...",
   "gemini_config": { "api_key": "AIza...", "model": "gemini-2.5-flash" }
 }
+
+Example config (LM Studio):
+{
+  "provider": "lmstudio",
+  "system_prompt": "...",
+  "lmstudio_config": { "base_url": "http://localhost:1234/v1", "api_key": "", "model": "your-model-name" }
+}
 """
 from __future__ import annotations
 
@@ -99,6 +106,19 @@ async def generate_caption(
                 model=cfg.gemini_config.model,
             )
             model_id = cfg.gemini_config.model
+
+        elif cfg.provider == CaptionProvider.lmstudio:
+            if not cfg.lmstudio_config:
+                raise HTTPException(400, "lmstudio_config is required for provider=lmstudio")
+            if not cfg.lmstudio_config.model:
+                raise HTTPException(400, "lmstudio_config.model must be set to the model name loaded in LM Studio")
+            from ...services.captioning.lmstudio import LMStudioCaptioner
+            captioner = LMStudioCaptioner(
+                model=cfg.lmstudio_config.model,
+                base_url=cfg.lmstudio_config.base_url,
+                api_key=cfg.lmstudio_config.api_key,
+            )
+            model_id = cfg.lmstudio_config.model
 
         else:
             raise HTTPException(400, f"Unknown provider: {cfg.provider}")

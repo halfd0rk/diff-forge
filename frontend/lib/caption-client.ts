@@ -4,7 +4,7 @@ const BASE =
 
 // ─── Provider config types ────────────────────────────────────────────────────
 
-export type CaptionProvider = 'azure' | 'openai' | 'gemini';
+export type CaptionProvider = 'azure' | 'openai' | 'gemini' | 'lmstudio';
 
 export interface AzureProviderConfig {
   endpoint: string;
@@ -25,11 +25,18 @@ export interface GeminiProviderConfig {
   model: GeminiModel;
 }
 
+export interface LMStudioProviderConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}
+
 export interface ProviderConfig {
   provider: CaptionProvider;
   azure?: AzureProviderConfig;
   openai?: OpenAIProviderConfig;
   gemini?: GeminiProviderConfig;
+  lmstudio?: LMStudioProviderConfig;
 }
 
 // ─── API call ─────────────────────────────────────────────────────────────────
@@ -60,6 +67,13 @@ export async function generateCaption(
       gemini_config: {
         api_key: providerConfig.gemini.apiKey,
         model:   providerConfig.gemini.model,
+      },
+    }),
+    ...(providerConfig.lmstudio && {
+      lmstudio_config: {
+        base_url: providerConfig.lmstudio.baseUrl,
+        api_key:  providerConfig.lmstudio.apiKey,
+        model:    providerConfig.lmstudio.model,
       },
     }),
   };
