@@ -43,6 +43,24 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     resolution: { multiple: 32, minWidth: 32, minHeight: 32 },
     frames: { rule: '4n+1', min: 1, max: 600 },
   },
+  FLUX2_4B: {
+    id: 'FLUX2_4B',
+    name: 'FLUX.2 klein 4B',
+    resolution: { multiple: 16, minWidth: 512, minHeight: 512 },
+    frames: { rule: 'any', min: 1, max: 1 },
+  },
+  FLUX2_9B: {
+    id: 'FLUX2_9B',
+    name: 'FLUX.2 klein 9B',
+    resolution: { multiple: 16, minWidth: 512, minHeight: 512 },
+    frames: { rule: 'any', min: 1, max: 1 },
+  },
+  ILLUSTRIOUS_SDXL: {
+    id: 'ILLUSTRIOUS_SDXL',
+    name: 'Illustrious SDXL',
+    resolution: { multiple: 8, minWidth: 768, minHeight: 768 },
+    frames: { rule: 'any', min: 1, max: 1 },
+  },
 };
 
 export function nearestMultiple(value: number, multiple: number): number {
