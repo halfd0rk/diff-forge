@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, AlertCircle, CheckCircle2, Loader2, X, Trash2 } from 'lucide-react';
+import { Plus, AlertCircle, CheckCircle2, Loader2, X, Trash2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import type { Dataset } from '@/lib/dataset';
+import type { Dataset, TargetModel } from '@/lib/dataset';
+import { MODEL_CONFIGS } from '@/lib/model-config';
 
 interface SidebarProps {
   datasets: Dataset[];
@@ -13,16 +14,17 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDeleteDataset: (datasetId: string) => void;
+  onDuplicateDataset: (sourceId: string, newModel: TargetModel) => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
 export function Sidebar({
-  datasets, selectedId, onSelect, onNew, onDeleteDataset, mobileOpen, onMobileClose,
+  datasets, selectedId, onSelect, onNew, onDeleteDataset, onDuplicateDataset, mobileOpen, onMobileClose,
 }: SidebarProps) {
-  // Two-step delete: first click arms, second click confirms.
-  // Auto-disarms after 3 s if the user doesn't follow through.
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingCopyId,   setPendingCopyId]   = useState<string | null>(null);
+  const [copyModel,       setCopyModel]       = useState<TargetModel>('LTX');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const armDelete = (e: React.MouseEvent, id: string) => {
@@ -45,6 +47,25 @@ export function Sidebar({
     setPendingDeleteId(null);
   };
 
+  const armCopy = (e: React.MouseEvent, ds: Dataset) => {
+    e.stopPropagation();
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setPendingDeleteId(null);
+    setPendingCopyId(ds.id);
+    setCopyModel(ds.targetModel);
+  };
+
+  const confirmCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (pendingCopyId) onDuplicateDataset(pendingCopyId, copyModel);
+    setPendingCopyId(null);
+  };
+
+  const cancelCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPendingCopyId(null);
+  };
+
   // Disarm if the dataset disappears from the list
   useEffect(() => {
     if (pendingDeleteId && !datasets.find(d => d.id === pendingDeleteId)) {
@@ -54,6 +75,7 @@ export function Sidebar({
 
   const handleSelect = (id: string) => {
     setPendingDeleteId(null);
+    setPendingCopyId(null);
     onSelect(id);
     onMobileClose();
   };
@@ -95,6 +117,7 @@ export function Sidebar({
             {datasets.map((ds) => {
               const isSelected    = selectedId === ds.id;
               const isPending     = pendingDeleteId === ds.id;
+              const isCopy        = pendingCopyId === ds.id;
               const validated     = ds.files.filter(f => f.validation?.status === 'validated');
               const validating    = ds.files.some(f => !f.validation) && ds.files.length > 0;
               const hasErrors     = ds.issues.some(i => i.severity === 'error');
@@ -104,7 +127,7 @@ export function Sidebar({
               return (
                 <div key={ds.id} className="relative group">
                   <button
-                    onClick={() => !isPending && handleSelect(ds.id)}
+                    onClick={() => !isPending && !isCopy && handleSelect(ds.id)}
                     className={cn(
                       'w-full text-left rounded-md px-2.5 py-2 text-sm transition-colors pr-7',
                       'flex items-start justify-between gap-1.5',
@@ -146,47 +169,61 @@ export function Sidebar({
                     )}
                   </button>
 
-                  {/* ── Delete control ────────────────────────────── */}
+                  {/* ── Hover actions / confirmations ─────────────── */}
                   {isPending ? (
-                    /* Confirmation row */
                     <div className="absolute inset-y-0 right-1 flex items-center gap-0.5">
-                      {/* Cancel */}
-                      <button
-                        onClick={cancelDelete}
-                        title="Cancel"
-                        className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
-                      >
+                      <button onClick={cancelDelete} title="Cancel"
+                        className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors">
                         <X className="w-3 h-3" />
                       </button>
-                      {/* Confirm */}
-                      <button
-                        onClick={e => confirmDelete(e, ds.id)}
-                        title="Confirm delete"
-                        className="h-5 w-5 flex items-center justify-center rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-                      >
+                      <button onClick={e => confirmDelete(e, ds.id)} title="Confirm delete"
+                        className="h-5 w-5 flex items-center justify-center rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
+                  ) : isCopy ? (
+                    <div className="absolute inset-y-0 right-1 flex items-center gap-0.5">
+                      <button onClick={cancelCopy} title="Cancel"
+                        className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                      <button onClick={confirmCopy} title="Duplicate"
+                        className="h-5 w-5 flex items-center justify-center rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                        <Check className="w-3 h-3" />
+                      </button>
+                    </div>
                   ) : (
-                    /* Trash icon — appears on hover */
-                    <button
-                      onClick={e => armDelete(e, ds.id)}
-                      title="Delete dataset"
-                      className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2',
-                        'h-5 w-5 flex items-center justify-center rounded',
-                        'opacity-0 group-hover:opacity-100 transition-opacity',
-                        'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
-                      )}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={e => armCopy(e, ds)} title="Duplicate dataset"
+                        className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <button onClick={e => armDelete(e, ds.id)} title="Delete dataset"
+                        className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   )}
 
-                  {/* "Confirm?" label shown below when armed */}
                   {isPending && (
                     <div className="px-2.5 pb-1.5 -mt-0.5">
                       <p className="text-[10px] text-destructive font-medium">Delete permanently?</p>
+                    </div>
+                  )}
+
+                  {isCopy && (
+                    <div className="px-2.5 pb-2 -mt-0.5 flex flex-col gap-1">
+                      <p className="text-[10px] text-muted-foreground font-medium">Copy as:</p>
+                      <select
+                        value={copyModel}
+                        onChange={e => setCopyModel(e.target.value as TargetModel)}
+                        onClick={e => e.stopPropagation()}
+                        className="h-6 w-full text-xs px-1.5 bg-background border border-input rounded outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        {Object.values(MODEL_CONFIGS).map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 </div>

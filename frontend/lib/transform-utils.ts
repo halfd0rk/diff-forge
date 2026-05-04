@@ -55,6 +55,12 @@ export async function processVideoWithBackend(opts: ProcessOptions): Promise<Dat
   const totalSegs = done.segments.length;
   const newFiles: DatasetFile[] = [];
 
+  // Image processors output PNG; video/gif processors output MP4.
+  const isImageInput = file.type === 'image';
+  const outExt  = isImageInput ? '.png'       : '.mp4';
+  const outMime = isImageInput ? 'image/png'  : 'video/mp4';
+  const outType = isImageInput ? 'image' as const : 'video' as const;
+
   for (const seg of done.segments) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
@@ -65,14 +71,14 @@ export async function processVideoWithBackend(opts: ProcessOptions): Promise<Dat
 
     const blob = await downloadSegment(done.job_id, seg.index);
     const segName = totalSegs > 1 ? `${file.name}_seg${seg.index}` : file.name;
-    const processedFile = new File([blob], `${segName}.mp4`, { type: 'video/mp4' });
+    const processedFile = new File([blob], `${segName}${outExt}`, { type: outMime });
 
     newFiles.push({
       id: crypto.randomUUID(),
       name: segName,
-      type: 'video',
+      type: outType,
       file: processedFile,
-      caption: file.caption,          // broadcast caption to every segment
+      caption: file.caption,
       mediaUrl: URL.createObjectURL(blob),
       splits: undefined,
       validation: {

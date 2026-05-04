@@ -8,7 +8,7 @@ import { UploadDialog } from './UploadDialog';
 import { MetadataBar } from './MetadataBar';
 import { ExportDialog } from './ExportDialog';
 import { DatasetView } from './DatasetView';
-import type { Dataset } from '@/lib/dataset';
+import type { Dataset, TargetModel } from '@/lib/dataset';
 import type { TransformConfig } from '@/lib/model-config';
 import { MODEL_CONFIGS, computeTransformedMetadata, isValidResolution, isValidFrameCount } from '@/lib/model-config';
 import { validateDatasetFile } from '@/lib/validation';
@@ -247,6 +247,26 @@ export function DatasetManager() {
 
   // Batch update: applies all captions in ONE commit so undo works atomically
   // and avoids stale-closure issues when many async calls complete in sequence.
+  const handleDuplicateDataset = (sourceId: string, newModel: TargetModel) => {
+    const source = datasets.find(d => d.id === sourceId);
+    if (!source) return;
+    const copy: Dataset = {
+      ...source,
+      id: crypto.randomUUID(),
+      name: `${source.name} (copy)`,
+      targetModel: newModel,
+      createdAt: new Date(),
+      files: source.files.map(f => ({
+        ...f,
+        id: crypto.randomUUID(),
+        // Reset validation when the model changes — new rules apply
+        validation: newModel !== source.targetModel ? undefined : f.validation,
+      })),
+    };
+    commit([...datasets, copy]);
+    setSelectedId(copy.id);
+  };
+
   const handleDeleteDataset = (datasetId: string) => {
     const ds = datasets.find(d => d.id === datasetId);
     if (!ds) return;
@@ -313,6 +333,7 @@ export function DatasetManager() {
           mobileOpen={sidebarMobileOpen}
           onMobileClose={() => setSidebarMobileOpen(false)}
           onDeleteDataset={handleDeleteDataset}
+          onDuplicateDataset={handleDuplicateDataset}
         />
 
         <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">

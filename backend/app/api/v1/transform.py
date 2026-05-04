@@ -190,8 +190,18 @@ def download_segment(job_id: str, segment_index: int = 0) -> FileResponse:
     if not path.exists():
         raise HTTPException(status_code=404, detail="Output file missing from disk")
 
-    fname = f"processed_seg{segment_index}.mp4" if len(job.output_paths) > 1 else "processed.mp4"
-    return FileResponse(path=path, media_type="video/mp4", filename=fname)
+    _MIME: dict[str, str] = {
+        ".mp4": "video/mp4", ".mov": "video/quicktime",
+        ".avi": "video/x-msvideo", ".webm": "video/webm",
+        ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".webp": "image/webp", ".bmp": "image/bmp",
+        ".tif": "image/tiff", ".tiff": "image/tiff",
+    }
+    ext        = path.suffix.lower()
+    media_type = _MIME.get(ext, "application/octet-stream")
+    base       = f"processed_seg{segment_index}" if len(job.output_paths) > 1 else "processed"
+    fname      = f"{base}{ext}"
+    return FileResponse(path=path, media_type=media_type, filename=fname)
 
 
 @router.delete("/{job_id}", summary="Clean up a job and its files")
