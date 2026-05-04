@@ -262,8 +262,11 @@ export function UploadDialog({ open, onClose, onConfirm }: UploadDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LTX">LTX</SelectItem>
+                <SelectItem value="LTX">LTX Video</SelectItem>
                 <SelectItem value="WAN">WAN</SelectItem>
+                <SelectItem value="FLUX2_4B">FLUX.2 klein 4B</SelectItem>
+                <SelectItem value="FLUX2_9B">FLUX.2 klein 9B</SelectItem>
+                <SelectItem value="ILLUSTRIOUS_SDXL">Illustrious SDXL</SelectItem>
               </SelectContent>
             </Select>
           </div>

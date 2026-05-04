@@ -1,4 +1,4 @@
-export type TargetModel = 'LTX' | 'WAN';
+export type TargetModel = 'LTX' | 'WAN' | 'FLUX2_4B' | 'FLUX2_9B' | 'ILLUSTRIOUS_SDXL';
 export type MediaType = 'video' | 'image' | 'gif';
 
 export const SUPPORTED_VIDEO_EXTS = new Set(['mp4']);

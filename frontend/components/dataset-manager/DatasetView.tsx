@@ -17,6 +17,7 @@ import type { TransformConfig, ModelConfig } from '@/lib/model-config';
 import { MODEL_CONFIGS } from '@/lib/model-config';
 import { processVideoWithBackend } from '@/lib/transform-utils';
 import { generateCaption, type ProviderConfig } from '@/lib/caption-client';
+import { DEFAULT_SYSTEM_PROMPTS } from '@/lib/caption-prompts';
 import { cn } from '@/lib/utils';
 
 interface BatchState {
@@ -51,6 +52,13 @@ const DEFAULT_CAPTION_CONFIG: CaptionConfig = {
   samplingMode: 'empty-only',
 };
 
+function defaultCaptionConfig(targetModel: string): CaptionConfig {
+  return {
+    systemPrompt: DEFAULT_SYSTEM_PROMPTS[targetModel as keyof typeof DEFAULT_SYSTEM_PROMPTS] ?? '',
+    samplingMode: 'empty-only',
+  };
+}
+
 export function DatasetView({ dataset, validating, onApplyTransform, onSaveSplits, onApplyTransformToSelected, onReplaceWithSegments, onReplaceBatch, onDeleteFiles, onUpdateCaption, onUpdateCaptionBatch }: DatasetViewProps) {
   const [activeTab, setActiveTab] = useState('transform');
 
@@ -61,7 +69,7 @@ export function DatasetView({ dataset, validating, onApplyTransform, onSaveSplit
   const [batchState, setBatchState] = useState<BatchState | null>(null);
 
   // Caption tab state
-  const [captionConfig, setCaptionConfig] = useState<CaptionConfig>(DEFAULT_CAPTION_CONFIG);
+  const [captionConfig, setCaptionConfig] = useState<CaptionConfig>(() => defaultCaptionConfig(dataset.targetModel));
   const [captionProviderConfig, setCaptionProviderConfig] = useState<ProviderConfig | null>(null);
   const [captionSelectedIds, setCaptionSelectedIds] = useState<Set<string>>(new Set());
   const [captionFocusedId, setCaptionFocusedId] = useState<string | null>(null);
@@ -75,6 +83,10 @@ export function DatasetView({ dataset, validating, onApplyTransform, onSaveSplit
   // Item detail / edit state
   const [detailFileId, setDetailFileId] = useState<string | null>(null);
   const [editFileId, setEditFileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCaptionConfig(defaultCaptionConfig(dataset.targetModel));
+  }, [dataset.id]);
 
   const modelConfig: ModelConfig = MODEL_CONFIGS[dataset.targetModel] ?? MODEL_CONFIGS['LTX'];
   const detailFile = dataset.files.find((f) => f.id === detailFileId) ?? null;
