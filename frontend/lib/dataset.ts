@@ -2,7 +2,7 @@ export type TargetModel = 'LTX' | 'WAN' | 'FLUX2_4B' | 'FLUX2_9B' | 'ILLUSTRIOUS
 export type MediaType = 'video' | 'image' | 'gif';
 
 export const SUPPORTED_VIDEO_EXTS = new Set(['mp4']);
-export const SUPPORTED_IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png']);
+export const SUPPORTED_IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'bmp', 'tif', 'tiff', 'avif']);
 export const SUPPORTED_GIF_EXTS = new Set(['gif', 'webp']);
 
 // ─── Validation types ────────────────────────────────────────────────────────

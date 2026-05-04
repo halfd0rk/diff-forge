@@ -29,11 +29,18 @@ def prepare_for_captioning(
     """
     ext = Path(filename).suffix.lower()
 
-    if ext in {".mp4", ".mov", ".avi", ".webm", ".gif", ".webp"}:
+    if ext in {".mp4", ".mov", ".avi", ".webm", ".gif"}:
         sheet = _make_sprite_sheet(file_bytes, ext)
         return sheet, "image/jpeg"
 
-    # Still image path
+    # WebP can be static or animated — only sprite-sheet the animated variant
+    if ext == ".webp":
+        probe = Image.open(io.BytesIO(file_bytes))
+        if getattr(probe, 'n_frames', 1) > 1:
+            sheet = _make_sprite_sheet(file_bytes, ext)
+            return sheet, "image/jpeg"
+
+    # Still image path (jpg, png, bmp, tif, avif, static webp, …)
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
     img = _maybe_resize(img, _MAX_IMAGE_PX)
     buf = io.BytesIO()

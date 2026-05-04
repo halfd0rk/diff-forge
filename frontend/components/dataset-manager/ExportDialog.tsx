@@ -155,7 +155,7 @@ export function ExportDialog({
           <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
             <p className="font-semibold text-foreground text-xs mb-0.5">Export contents</p>
             <p>📦 <code className="font-mono text-[10px]">{dataset.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.zip</code></p>
-            <p className="ml-4">└ <code className="font-mono text-[10px]">0001_filename.mp4</code> + <code className="font-mono text-[10px]">.txt</code></p>
+            <p className="ml-4">└ <code className="font-mono text-[10px]">0001_filename.ext</code> + <code className="font-mono text-[10px]">.txt</code></p>
             <p className="ml-4">└ <code className="font-mono text-[10px]">0002_…</code></p>
             <p className="ml-4">└ <code className="font-mono text-[10px]">metadata.json</code></p>
             <div className="mt-1.5 rounded border border-border/50 px-2 py-1.5 bg-background/50 text-[10px] font-mono text-muted-foreground leading-relaxed">
